@@ -1,0 +1,43 @@
+# Example Organic Material Card 
+
+# mat_type: int (1 (Organic) or 2 (Inorganic))
+# Specifies whether the material is Organic or Inorganic
+mat_type = 2
+
+[calibration]
+# photon: [double A, double B]
+# Linear constants for photon collision in the form Ax+B
+photon = [1.00, 0.000]
+# carbon: double
+# Multiplicative constant for neutron collision on carbon 
+carbon = 0
+
+[calibration.birks]
+# stopping_power: file_path
+# File path for stopping power table for material
+stopping_power = "/Users/loren/WORKSPACE/PHOTON/verification-and-validation/3-coupling-OpenMC-MPPost/data/birks/stilbene_dEdx.txt"
+# S: double
+# Scintillation efficiency for material and geometry
+S = 1
+# kB: double
+# Birks' coefficient for material and geometry
+kB = 0
+
+[pulse_creation]
+# pgt: double
+# Pulse generation time for a detector of this card, in nanoseconds
+pgt = 10.0
+# dt: double
+# Deadtime for a detector of this card, in nanoseconds
+dt = 0.0
+
+[resolution]
+# time: double
+# Standard deviation for gaussian transformation of pulse time, in nanoseconds
+time = 0.5
+# energy.photon: [double A, double B, double C]
+# Constants for gaussian energy broadening of photon pulses in the form Ax+B*SQRT(x)+C
+energy.photon = [0.187 , 0.2855 , 0.1175]
+# energy.neutron: [double A, double B, double C]
+# Constants for gaussian energy broadening of neutron pulses in the form Ax+B*SQRT(x)+C
+energy.neutron = [0.187 , 0.2855 , 0.1175]

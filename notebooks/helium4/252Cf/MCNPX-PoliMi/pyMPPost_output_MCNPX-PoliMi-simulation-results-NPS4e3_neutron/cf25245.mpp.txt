@@ -1,0 +1,20 @@
+Post Processor Output File Summary
+Title: Cf252-helium4-MCNPX-PoliMi
+Input File: ./_tmp_input_config.toml
+User: lorenlo
+Processed: 2026-10-06 09:36:21.476997
+
+MCNP-PoliMi File Characteristics
+--------------------------------
+Number of lines: 1002
+Number of histories: 945
+
+Pulse Height Analysis
+---------------------
+Total number of pulses above threshold: 895
+Total number of neutron pulses above threshold: 895
+Total number of photon pulses above threshold: 0
+
+Runtime
+-------
+This run took 0.3265080451965332 seconds

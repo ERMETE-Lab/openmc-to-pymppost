@@ -1,0 +1,20 @@
+Post Processor Output File Summary
+Title: Cs137-MCNPX-PoliMi
+Input File: ./_tmp_input_config.toml
+User: lorenlo
+Processed: 2026-10-10 14:27:02.145149
+
+MCNP-PoliMi File Characteristics
+--------------------------------
+Number of lines: 2910
+Number of histories: 866
+
+Pulse Height Analysis
+---------------------
+Total number of pulses above threshold: 861
+Total number of neutron pulses above threshold: 0
+Total number of photon pulses above threshold: 861
+
+Runtime
+-------
+This run took 0.42833399772644043 seconds

@@ -1,0 +1,22 @@
+# --- Simulation data (too large for the repository) -------------------------
+# OpenMC track files and statepoints
+*.h5
+# Collision files: OpenMC (*.d) and MCNPX-PoliMi (*.d.neutron, *.d.photon)
+*.d
+*.d.neutron
+*.d.photon
+ 
+# --- pyMPPost outputs (regenerable from the collision files) ----------------
+*_All_Pulses
+*_Pulse_Hist
+ 
+# --- Logs and temporary files -----------------------------------------------
+*.log
+*.pkl
+results/collision_track_check
+ 
+# --- System and editor files ------------------------------------------------
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+.vscode/

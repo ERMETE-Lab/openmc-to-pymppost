@@ -1,0 +1,20 @@
+Post Processor Output File Summary
+Title: Cf252-OpenMC
+Input File: ./_tmp_input_config.toml
+User: lorenlo
+Processed: 2026-10-06 10:11:50.504001
+
+MCNP-PoliMi File Characteristics
+--------------------------------
+Number of lines: 6269
+Number of histories: 2852
+
+Pulse Height Analysis
+---------------------
+Total number of pulses above threshold: 2324
+Total number of neutron pulses above threshold: 2324
+Total number of photon pulses above threshold: 0
+
+Runtime
+-------
+This run took 0.36968398094177246 seconds

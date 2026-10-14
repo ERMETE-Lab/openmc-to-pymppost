@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<materials>
+  <cross_sections>/Users/loren/WORKSPACE/xs/OpenMC/mcnp_endfb71/cross_sections.xml</cross_sections>
+  <material id="1" name="air">
+    <density value="1.225e-14" units="g/cm3"/>
+    <nuclide name="N14" ao="0.78"/>
+    <nuclide name="O16" ao="0.21"/>
+  </material>
+  <material id="99" name="stilbene">
+    <density value="1.16" units="g/cm3"/>
+    <nuclide name="C0" ao="0.5385"/>
+    <nuclide name="H1" ao="0.4615"/>
+  </material>
+</materials>

@@ -1,0 +1,88 @@
+# example pyMPPost Input file
+
+
+# title: string
+# Title of the post processing run, to help identify different runs
+title = "Cf252-helium4-MCNPX-PoliMi"
+# username: string
+# Name of the person running the code, to help identify different runs
+username = "lorenlo"
+# seed: int
+# Seed for random computation, use 0 for no seed
+seed = 0
+
+["i/o"] 
+# polimi_det_in: file_path
+# File path to the collision file from MCNPX-PoliMi 
+polimi_det_in = "/Users/loren/WORKSPACE/PHOTON/verification-and-validation/3-coupling-OpenMC-MPPost/results/helium4/252Cf/OpenMC_collision_file_neutron_helium4_4.0E5.d"
+# output_root: file_path
+# File path to the root of all output files
+output_root = "./MPPost_output_simulation_results-NPS4e3_neutron/MCNPX-PoliMi_4E5_Cf252.mpp"
+# output_headers: boolean
+# Whether or not output files contain headers 
+output_headers = true
+
+[detectors] 
+# NPS: int
+# Number of source events that were simulated in polimi_det_in
+NPS = 4e3
+# detector_cells: array of arrays of ints
+# Cell numbers for all of the cells that are in the collision file grouped into detectors
+detector_cells = [[11]]
+# cell_mats: array of ints, requires: len(detector_mats) == len(detector_cells)
+# Material that each detector is conposed of, zero-indexed and matched to the materials in the material_list
+detector_mats = [0]
+# material_list: array of file_paths
+# File paths to the material cards used for this run
+material_list = ["material_card.toml"]
+
+["pulse_height"] 
+# module_on: boolean
+# Whether or not to run the Pulse Height Module
+module_on = true
+# all_pulses: "parquet", "tsv", or "none"
+# File type of the all_pulses file, if "none" no output file will be created
+all_pulses = "tsv"
+# pulse_tol: double
+# Tolerance value for comparison
+pulse_tol = 1e-5
+# time_res_on: boolean
+# Whether or not to run the time resolution sub-module
+time_res_on = true
+# energy_res_on: boolean
+# Whether or not to run the energy resolution sub-module
+energy_res_on = true
+# hist_bins: int
+# Number of bins for the histogrammed Pulse Height Data
+hist_bins = 3 
+# threshhold.lower: double
+# Lower threshold of pulse per pulse to accept, in MeVee
+threshold.lower = 0.01
+# threshhold.upper: double
+# Upper threshold of pulse per pulse to accept, in MeVee
+threshold.upper = 5
+
+["cross_correlation"] 
+# module_on: boolean
+# Whether or not to run the Cross Correlation Module
+module_on = false
+# start_detectors: array of ints
+# List of start detectors to be used as the trigger time for cross-correlation
+start_detectors = [100]
+# all_cc: "tsv", or "none"
+# File type of the all_cc files, if "none" no output file will be created
+all_cc = "none"
+# hist_bins: int
+# Number of bins for the histogrammed Cross Correlation Data
+hist_bins = 50 
+
+["multiplicity"] 
+# module_on: boolean
+# Whether or not to run the Multiplicity Module
+module_on = false
+# window_width: double
+# The width of the windows for calculating multiplicity counts
+window_width = 200
+# mult_tol: double
+# Tolerance value for comparison
+mult_tol = 1e-5

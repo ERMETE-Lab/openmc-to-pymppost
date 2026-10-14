@@ -1,0 +1,20 @@
+Post Processor Output File Summary
+Title: Eu152-MCNPX-PoliMi
+Input File: ./_tmp_input_config.toml
+User: lorenlo
+Processed: 2026-10-10 14:24:57.584491
+
+MCNP-PoliMi File Characteristics
+--------------------------------
+Number of lines: 2328
+Number of histories: 910
+
+Pulse Height Analysis
+---------------------
+Total number of pulses above threshold: 885
+Total number of neutron pulses above threshold: 0
+Total number of photon pulses above threshold: 885
+
+Runtime
+-------
+This run took 0.3386249542236328 seconds

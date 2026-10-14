@@ -1,0 +1,20 @@
+Post Processor Output File Summary
+Title: DD-helium4-MCNPX-PoliMi
+Input File: ./_tmp_input_config.toml
+User: lorenlo
+Processed: 2026-10-06 10:12:22.191087
+
+MCNP-PoliMi File Characteristics
+--------------------------------
+Number of lines: 935
+Number of histories: 893
+
+Pulse Height Analysis
+---------------------
+Total number of pulses above threshold: 866
+Total number of neutron pulses above threshold: 866
+Total number of photon pulses above threshold: 0
+
+Runtime
+-------
+This run took 0.3357858657836914 seconds
