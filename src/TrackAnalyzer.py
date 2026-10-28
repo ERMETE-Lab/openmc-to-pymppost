@@ -45,6 +45,18 @@ Implementation notes
   secondary particles born at the interaction site.
 * A direction change at a reflective boundary is indistinguishable from a
   collision. Avoid reflective surfaces touching the detector material.
+
+Correspondence with the MCNPX-PoliMi input cards
+------------------------------------------------
+* RPOL(1), RPOL(2): thresholds on the energy released in a collision, for
+  neutrons and photons [MeV]. Collisions that deposit less are not written.
+  Here: ``build_analyzer(..., rpol=(RPOL1, RPOL2))``, or ``Edep_threshold``
+  [eV] in the analyzer constructors. 0 writes every energy release.
+* IPOL(7), IPOL(8...): number and list of the cells for which collisions are
+  written. Here: ``process_file(..., target_cells=[...])`` with the OpenMC
+  cell IDs (IPOL(7) is simply the length of the list). None = every cell.
+* The other IPOL entries (source definition, fission multiplicity, photon
+  production options) have no counterpart: the source is defined in OpenMC.
 """
 
 import numpy as np
@@ -136,9 +148,10 @@ class TrackAnalyzer:
     PARTICLE = None       # "neutron" or "photon", set by subclasses
     POLIMI_PTYPE = None   # particle type code in the collision file
 
-    def __init__(self, Ethreshold, polimi_file_path=None, verbose=False,
-                 dir_atol=1e-6):
+    def __init__(self, Ethreshold, Edep_threshold=0.0, polimi_file_path=None,
+                 verbose=False, dir_atol=1e-6):
         self.Ethreshold = Ethreshold      # events with incident energy below this [eV] are skipped
+        self.Edep_threshold = Edep_threshold  # events depositing less than this [eV] are skipped (RPOL)
         self.verbose = verbose
         self.dir_atol = dir_atol          # tolerance used to detect a direction change
 
@@ -146,6 +159,7 @@ class TrackAnalyzer:
         self.counts = {}                  # written events per label (nuclide or interaction)
         self.n_tracks = 0                 # analysed particle tracks
         self.n_tracks_no_events = 0       # tracks without any written event
+        self.n_below_edep = 0             # events skipped by Edep_threshold (RPOL)
 
         self.polimi_file = open(polimi_file_path, "w") if polimi_file_path else None
 
@@ -192,13 +206,16 @@ class TrackAnalyzer:
         }
 
     # --- main loop ------------------------------------------------------------
-    def process_file(self, track_file, target_materials=None, n_inspect=0,
-                     max_histories=None):
+    def process_file(self, track_file, target_materials=None, target_cells=None,
+                     n_inspect=0, max_histories=None):
         """
         Analyse every history in ``track_file`` and write the collision file.
 
         target_materials : list of OpenMC material IDs of the detector(s);
                            None keeps events in every material.
+        target_cells     : list of OpenMC cell IDs for which collisions are
+                           written (as IPOL(7)-(8...) in MCNPX-PoliMi);
+                           None keeps events in every cell.
         n_inspect        : number of initial histories printed in verbose mode.
         max_histories    : optional limit on the number of histories (debug).
         Returns the number of processed histories.
@@ -223,12 +240,14 @@ class TrackAnalyzer:
                     self.analyze_track(pt.states.flatten(), history_id=h,
                                        particle_id=p_idx,
                                        target_materials=target_materials,
+                                       target_cells=target_cells,
                                        context=context)
         self.close()
         return len(names)
 
     def analyze_track(self, states, history_id=0, particle_id=0,
-                      target_materials=None, context=None, return_results=False):
+                      target_materials=None, target_cells=None, context=None,
+                      return_results=False):
         """
         Analyse a single particle track and write its valid events.
         Event dictionaries are returned only if ``return_results=True``.
@@ -243,13 +262,22 @@ class TrackAnalyzer:
             # 1. Material filter, evaluated where the interaction happens
             if target_materials is not None and states["material_id"][j] not in target_materials:
                 continue
+            # 2. Cell filter (IPOL(7)-(8...) in MCNPX-PoliMi)
+            if target_cells is not None and states["cell_id"][j] not in target_cells:
+                continue
 
-            # 2. Energy threshold on the incident energy
+            # 3. Energy threshold on the incident energy
             if ev["error"] is None and ev["E_in"] < self.Ethreshold:
                 ev["error"] = (f"Incident energy below threshold "
                                f"({ev['E_in']:.2e} < {self.Ethreshold:.2e} eV).")
 
-            # 3. Write and count
+            # 4. Threshold on the deposited energy (RPOL in MCNPX-PoliMi)
+            if ev["error"] is None and ev["edep"] < self.Edep_threshold:
+                ev["error"] = (f"Deposited energy below threshold "
+                               f"({ev['edep']:.2e} < {self.Edep_threshold:.2e} eV, RPOL).")
+                self.n_below_edep += 1
+
+            # 5. Write and count
             if ev["error"] is None:
                 self._write_polimi_event(ev, states, history_id, particle_id, n_written)
                 n_written += 1
@@ -265,6 +293,7 @@ class TrackAnalyzer:
             self.n_tracks_no_events += 1
             if self.verbose:
                 where = f" in materials {target_materials}" if target_materials is not None else ""
+                where += f" in cells {target_cells}" if target_cells is not None else ""
                 print(f"  → {tag}No valid events{where}.")
         if self.verbose:
             print(f"  → {tag}End of track: {len(states)} states, "
@@ -306,6 +335,8 @@ class TrackAnalyzer:
         print(f"Particle            : {self.PARTICLE}")
         print(f"Tracks analysed     : {self.n_tracks}")
         print(f"Tracks w/o events   : {self.n_tracks_no_events}")
+        print(f"Edep threshold      : {self.Edep_threshold / 1e6:g} MeV (RPOL), "
+              f"{self.n_below_edep} events skipped")
         print(f"Written events      : {sum(self.counts.values())}")
         for label, n in sorted(self.counts.items(), key=lambda x: -x[1]):
             print(f"  {label:<18}: {n}")
@@ -530,16 +561,23 @@ class PhotonTrackAnalyzer(TrackAnalyzer):
 # ---------------------------------------------------------------------------
 # Factory
 # ---------------------------------------------------------------------------
-def build_analyzer(particle, detector, **kwargs):
+def build_analyzer(particle, detector, rpol=None, **kwargs):
     """
     Create the right analyzer from a detector description, e.g.
 
         detector = {"neutron_targets": {"H-1": {"A": 0.99917, "zaid": 1001}, ...},
                     "photon_zaid": 6000}
 
+    rpol : (neutron, photon) thresholds on the deposited energy [MeV], as the
+           RPOL card of MCNPX-PoliMi; the one of ``particle`` is used.
+           None = no threshold (or ``Edep_threshold`` [eV] if given).
     Extra keyword arguments are forwarded to the analyzer constructor.
     """
     particle = particle.lower()
+    if rpol is not None:
+        if "Edep_threshold" in kwargs:
+            raise ValueError("Give either rpol [MeV] or Edep_threshold [eV], not both.")
+        kwargs["Edep_threshold"] = 1e6 * rpol[0 if particle == "neutron" else 1]
     if particle == "neutron":
         return NeutronTrackAnalyzer(targets=detector["neutron_targets"], **kwargs)
     if particle == "photon":

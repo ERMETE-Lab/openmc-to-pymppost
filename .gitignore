@@ -15,6 +15,10 @@
 *.pkl
 results/collision_track_check
  
+# --- Others comparison -----------------------------------------------
+notebooks/compare_LO_OpenMC_MCNP_PGT_1ns_vs_10ns.ipynb
+notebooks/trans-stilbene-1PGT
+
 # --- System and editor files ------------------------------------------------
 .DS_Store
 __pycache__/

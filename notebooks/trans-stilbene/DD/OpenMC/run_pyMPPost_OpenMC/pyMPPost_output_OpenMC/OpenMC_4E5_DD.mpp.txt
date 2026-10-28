@@ -2,7 +2,7 @@ Post Processor Output File Summary
 Title: DD-OpenMC
 Input File: input_config.toml
 User: lorenlo
-Processed: 2026-10-06 10:22:47.486196
+Processed: 2026-10-28 11:45:28.508724
 
 MCNP-PoliMi File Characteristics
 --------------------------------
@@ -11,10 +11,10 @@ Number of histories: 259254
 
 Pulse Height Analysis
 ---------------------
-Total number of pulses above threshold: 227235
-Total number of neutron pulses above threshold: 227235
+Total number of pulses above threshold: 227420
+Total number of neutron pulses above threshold: 227420
 Total number of photon pulses above threshold: 0
 
 Runtime
 -------
-This run took 2.36038875579834 seconds
+This run took 3.54290509223938 seconds

@@ -44,8 +44,8 @@ direction between two consecutive states inside the detector material.
   scintillator) using two-body elastic kinematics: the measured E′/E is compared with the
   value predicted at the measured scattering angle, and the candidate with the smallest
   residual is kept if the residual is below a tolerance (default 0.05).
-- Not written: collisions below the energy threshold (default 10 eV), thermal up-scattering,
-  near-forward scattering, and collisions not compatible with elastic kinematics
+- Not written: collisions below the incident-energy threshold (default 10 eV), thermal
+  up-scattering, near-forward scattering, and collisions not compatible with elastic kinematics
   (e.g. inelastic scattering).
 
 ### 🟡 Photons (`PhotonTrackAnalyzer`)
@@ -57,6 +57,10 @@ direction between two consecutive states inside the detector material.
   born at the same point (they are tracked separately and would otherwise be counted twice).
 
 Neutrons and photons are always analysed in **separate runs and separate collision files**.
+
+For both particles, collisions that deposit less than a given energy, or that occur outside the
+selected cells, can be left out of the collision file, as with the `RPOL` and `IPOL` cards of
+MCNPX-PoliMi (see [Same options as MCNPX-PoliMi](#-same-options-as-mcnpx-polimi)).
 
 ---
 
@@ -126,14 +130,65 @@ detector = {
 }
 
 analyzer = build_analyzer("neutron", detector,
-                          Ethreshold=10.0,       # eV (use 1e3 for photons)
+                          Ethreshold=10.0,       # incident-energy threshold, eV (use 1e3 for photons)
+                          rpol=(0.01, 100),      # as the RPOL card of MCNPX-PoliMi, MeV
                           max_residual=0.05,     # neutrons only
                           polimi_file_path="collision_file.d")
-analyzer.process_file("tracks.h5", target_materials=[99])   # detector material ID(s)
+analyzer.process_file("tracks.h5",
+                      target_materials=[99],     # detector material ID(s)
+                      target_cells=[20])         # as IPOL(7)-(8...), OpenMC cell ID(s)
 analyzer.summary()
 ```
 
-For photons: `build_analyzer("photon", detector, Ethreshold=1e3, polimi_file_path=...)`.
+For photons: `build_analyzer("photon", detector, Ethreshold=1e3, rpol=(0, 0), polimi_file_path=...)`.
+
+#### 🔁 Same options as MCNPX-PoliMi
+
+When the OpenMC results are compared with MCNPX-PoliMi, use the same values as in the
+MCNPX-PoliMi input file, so that the two collision files contain the same kind of events.
+
+| MCNPX-PoliMi card | Meaning | `TrackAnalyzer` | Notebook variable |
+|---|---|---|---|
+| `RPOL(1)`, `RPOL(2)` | thresholds on the energy **deposited** in a collision by neutrons and photons [MeV]; collisions that deposit less are not written; 0 writes every energy release | `build_analyzer(..., rpol=(RPOL1, RPOL2))` (or `Edep_threshold` in eV in the analyzer constructors) | `RPOL` |
+| `IPOL(7)`, `IPOL(8...)` | number and list of the cells for which collisions are written | `process_file(..., target_cells=[...])` with the **OpenMC** cell IDs; `IPOL(7)` is the length of the list; `None` = every cell | `IPOL_CELLS` |
+| other `IPOL` entries | source definition, fission multiplicity, photon production | no counterpart: the source is defined in the OpenMC model | — |
+| — | threshold on the **incident** energy of the particle [eV] | `Ethreshold` | `E_THRESHOLD_EV` |
+
+- `Ethreshold` and `rpol` are different cuts. `Ethreshold` removes the collisions of particles
+  below a given energy: 10 eV for neutrons, below which the target can no longer be considered
+  at rest, and the OpenMC photon cutoff (1 keV by default) for photons. `rpol` removes the
+  collisions that deposit little energy, as MCNPX-PoliMi does.
+- ⚠️ Do not use `Ethreshold` to reproduce `RPOL`: with photons, a 10 keV incident-energy cut
+  removes the energy deposited by low-energy photons (e.g. fluorescence X-rays) and distorts
+  the photopeak.
+- With `rpol=None` (or `(0, 0)`) and `target_cells=None` every reconstructed collision in the
+  selected materials is written.
+- `summary()` reports how many events were skipped by the `rpol` threshold.
+
+#### 📓 Configuration of `1_write_collision_file.ipynb`
+
+All the settings are in the configuration cell, except the path to `src/`. The values used for
+the cases of the paper are given in the last column.
+
+| Variable | Meaning | How to set it (values used in the paper) |
+|---|---|---|
+| `sys.path.append(...)` (2nd cell) | folder that contains `TrackAnalyzer.py` | path to `src/` of this repository |
+| `PARTICLE` | particle written in the collision file | `"neutron"` or `"photon"`, never both: run the notebook twice for both (`"neutron"` for stilbene and ⁴He, `"photon"` for NaI) |
+| `DETECTOR` | key of `DETECTOR_LIBRARY` that describes the detector | `"stilbene"`, `"helium4"`, `"nai"` |
+| `DETECTOR_MAT_IDS` | OpenMC material ID(s) of the detector; collisions in other materials are not written | the `material_id` given in `0_OpenMC_run.ipynb` (`[99]`) |
+| `BASE_DIR` | root folder of this repository on your machine | your path; results are written in `BASE_DIR/results/CASE` |
+| `CASE` | case folder, `<detector>/<source>` | e.g. `"trans-stilbene/252Cf"` |
+| `TRACK_DIR`, `TRACK_FILE` | folder and name of the OpenMC track file | where `0_OpenMC_run.ipynb` saved `tracks.h5` |
+| `E_THRESHOLD_EV` | incident-energy threshold per particle [eV] | `{"neutron": 1e1, "photon": 1e3}`; for photons keep it ≥ the OpenMC photon cutoff |
+| `RPOL` | (neutron, photon) thresholds on the deposited energy [MeV], as `RPOL(1)`, `RPOL(2)` | copy the `rpol` card of the MCNPX-PoliMi input: `(0.01, 100)` for stilbene and ⁴He, `(0, 0)` for NaI; `(0, 0)` = write every energy release |
+| `IPOL_CELLS` | OpenMC cell ID(s) for which collisions are written, as `IPOL(7)`-`(8...)` | `[20]`; must match `detector_cells` in the pyMPPost `input_config.toml`; `None` = every cell |
+| `MAX_RESIDUAL` | neutrons: tolerance on the difference between predicted and measured E′/E | `0.05`; smaller values reject more collisions as not elastic |
+| `WRITE_COHERENT` | photons: write coherent scattering events (zero deposited energy) | `False`; they do not change the light output |
+| `N_INSPECT` | number of initial histories printed event by event, with the reason why each event is written or skipped | `10`; `0` for a silent run |
+| `DETECTOR_LIBRARY` | candidate nuclides (`A` = atomic weight ratio of the nuclear data, ZAID written in the file) and representative photon ZAID of each detector | see *Choosing the candidates* below; add an entry for a new detector |
+
+The collision file is written to `BASE_DIR/results/CASE/OpenMC_collision_file_<PARTICLE>_<DETECTOR>_<N>E5.d`,
+where `N` is the number of histories found in the track file. Give this path to pyMPPost in Step 3.
 
 💡 **Choosing the candidates**
 - List **every nuclide** of the detector on which collisions can occur: a collision on a
