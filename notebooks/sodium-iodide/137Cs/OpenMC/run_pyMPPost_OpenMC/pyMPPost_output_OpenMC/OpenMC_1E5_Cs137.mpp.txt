@@ -2,7 +2,7 @@ Post Processor Output File Summary
 Title: Cs137-OpenMC
 Input File: input_config.toml
 User: lorenlo
-Processed: 2026-10-28 12:04:38.520280
+Processed: 2026-10-28 12:40:31.400185
 
 MCNP-PoliMi File Characteristics
 --------------------------------
@@ -11,10 +11,10 @@ Number of histories: 87133
 
 Pulse Height Analysis
 ---------------------
-Total number of pulses above threshold: 86638
+Total number of pulses above threshold: 86640
 Total number of neutron pulses above threshold: 0
-Total number of photon pulses above threshold: 86638
+Total number of photon pulses above threshold: 86640
 
 Runtime
 -------
-This run took 1.27384614944458 seconds
+This run took 2.133180856704712 seconds
