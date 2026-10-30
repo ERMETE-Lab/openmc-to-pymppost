@@ -17,7 +17,6 @@
 - [Reproducing the results of the paper](#-reproducing-the-results-of-the-paper)
 - [Verification](#-verification)
 - [Limitations](#-limitations)
-- [Repository structure](#-repository-structure)
 - [Authors and contributions](#-authors-and-contributions)
 - [License](#-license) · [Acknowledgements](#-acknowledgements)
 
@@ -380,35 +379,6 @@ OpenMC history; for photons a single representative ZAID is written. None of the
 affects the light-output computation.
 
 </details>
-
----
-
-## 📁 Repository structure
-
-```
-src/
-  TrackAnalyzer.py                tracks.h5 → MCNPX-PoliMi collision file
-  collision_track_check.py        event-by-event check against OpenMC collision tracking
-notebooks/
-  <detector>/<source>/            trans-stilbene/{252Cf, DD}, helium4/{252Cf, DD},
-                                  sodium-iodide/{137Cs, 152Eu}
-    OpenMC/
-      0_OpenMC_run.ipynb          model and OpenMC run (writes tracks.h5)
-      1_write_collision_file.ipynb
-      2_plot_tracks.ipynb
-      geometry.xml, materials.xml, settings.xml
-      run_pyMPPost_OpenMC/        pyMPPost input files and pyMPPost_analyzer.ipynb
-    MCNPX-PoliMi/
-      *.i                         MCNPX-PoliMi input file
-      input_config.toml, material_card.toml
-      pyMPPost_analyzer_MCNP.ipynb
-  sodium-iodide/152Eu/OpenMC/source.py      ¹⁵²Eu source (DDEP data)
-  trans-stilbene/252Cf/OpenMC/2_collision_track_check.ipynb
-  compare_LO_OpenMC_MCNP.ipynb    OpenMC vs MCNPX-PoliMi comparison and figures
-data/birks/stilbene_dEdx.txt      proton stopping power table for the stilbene material card
-results/<detector>/<source>/      light-output histograms (*.joblib)
-images/                           comparison figures (PDF)
-```
 
 ---
 
