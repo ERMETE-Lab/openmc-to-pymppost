@@ -1,38 +1,114 @@
+<p align="center">
+  <a href="https://arxiv.org/abs/2610.39028"><img src="https://img.shields.io/badge/arXiv-2610.39028-b31b1b.svg?style=flat&logo=arxiv&logoColor=white" alt="arXiv"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://openmc.org"><img src="https://img.shields.io/badge/OpenMC-tracks-blue.svg" alt="OpenMC"></a>
+  <a href="https://gitlab.eecs.umich.edu/umich-dnng/pymppost"><img src="https://img.shields.io/badge/pyMPPost-detector%20response-orange.svg" alt="pyMPPost"></a>
+</p>
+
 # 🔬 OpenMC → pyMPPost
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-<!-- TODO: Zenodo DOI and arXiv badges, once available -->
+**Simulating scintillation detector responses with OpenMC and pyMPPost: a track-based coupling verified against MCNPX-PoliMi**
 
-**Detector response simulations with OpenMC and pyMPPost.**
-This repository converts the particle tracks written by [OpenMC](https://openmc.org) into an
-MCNPX-PoliMi collision file, so that the detector response post-processor
-[pyMPPost](https://gitlab.eecs.umich.edu/umich-dnng/pymppost) can be used with OpenMC,
-without any modification of OpenMC or pyMPPost.
-
-```
-OpenMC (tracks.h5) ──► TrackAnalyzer ──► collision file (MCNPX-PoliMi format) ──► pyMPPost ──► light output, pulses
-```
+- [Description](#-description)
+- [Cite as](#-cite-as)
+- [Installation](#-installation)
+- [How it works](#-how-it-works)
+- [How to use it](#-how-to-use-it)
+- [Reproducing the results of the paper](#-reproducing-the-results-of-the-paper)
+- [Verification](#-verification)
+- [Limitations](#-limitations)
+- [Repository structure](#-repository-structure)
+- [Authors and contributions](#-authors-and-contributions)
+- [License](#-license) · [Acknowledgements](#-acknowledgements)
 
 ---
 
-## ✨ Why
+## 📖 Description
 
-- **pyMPPost** computes realistic detector responses (light output with quenching,
-  energy and time resolution, pulse pile-up within a pulse generation time) from the
-  collision-by-collision output of **MCNPX-PoliMi**.
-- MCNPX-PoliMi is distributed by RSICC and is subject to export control.
-  **OpenMC** is open source, but it does not write an MCNPX-PoliMi collision file.
-- OpenMC can write the full sequence of particle states of every history (**tracks**).
-  `TrackAnalyzer` reconstructs the interactions in the detector from these tracks,
-  including the **target nuclide of neutron collisions**, which the track file does not store.
-- It works with **any OpenMC version that writes tracks**, including the development branch
-  with photonuclear physics
+[pyMPPost](https://gitlab.eecs.umich.edu/umich-dnng/pymppost) computes realistic detector
+responses (light output with quenching, energy and time resolution, pulse pile-up within a pulse
+generation time) from the collision-by-collision output of **MCNPX-PoliMi**. MCNPX-PoliMi is
+distributed by RSICC and is subject to export control, while the open-source Monte Carlo code
+[OpenMC](https://openmc.org) does not write an equivalent collision-level output.
+
+This repository couples OpenMC to pyMPPost **without modifying either code**. The Python class
+`TrackAnalyzer` reads the particle tracks written by OpenMC (`tracks.h5`), reconstructs the
+interactions in the detector material, including the **target nuclide of neutron collisions**
+(which the track file does not store), and writes them in the MCNPX-PoliMi collision file format.
+
+```mermaid
+flowchart LR
+    A["OpenMC<br/>tracks.h5"] --> B["TrackAnalyzer"]
+    B --> C["collision file<br/>(MCNPX-PoliMi format)"]
+    C --> D["pyMPPost"]
+    D --> E["light output,<br/>pulses"]
+```
+
+Main features:
+
+- **Neutrons** (`NeutronTrackAnalyzer`): elastic scattering, with the target nuclide identified
+  from two-body elastic kinematics.
+- **Photons** (`PhotonTrackAnalyzer`): Compton scattering, coherent scattering, photoelectric
+  absorption and pair production.
+- **Same options as MCNPX-PoliMi**: thresholds on the deposited energy (`RPOL`) and selection
+  of the detector cells (`IPOL`).
+- **Any OpenMC version that writes tracks** (`openmc.Tracks`, from OpenMC 0.13.1), including the
+  development branch with photonuclear physics
   ([GuySten/openmc, `photonuclear-physics`](https://github.com/GuySten/openmc/tree/photonuclear-physics)),
   where the collision tracking feature of the official release is not available.
+- **Verified** against MCNPX-PoliMi + pyMPPost on six neutron and photon cases: the total number
+  of pulses agrees within 1% in all cases.
 
 ---
 
-## ⚙️ How it works
+## 📚 Cite as
+
+If you use this code in your research, please cite:
+
+> L. Loi, D. Breitenmoser, S. D. Clarke, S. A. Pozzi, and A. Cammi,
+> "Simulating scintillation detector responses with OpenMC and pyMPPost: a track-based coupling
+> verified against MCNPX-PoliMi," arXiv:2610.39028, 2026.
+> [https://arxiv.org/abs/2610.39028](https://arxiv.org/abs/2610.39028)
+
+For LaTeX users:
+
+```bibtex
+@misc{Loi2026_OpenMC_pyMPPost,
+  title         = {Simulating scintillation detector responses with {OpenMC} and {pyMPPost}: a track-based coupling verified against {MCNPX-PoliMi}},
+  author        = {Lorenzo Loi and David Breitenmoser and Shaun D. Clarke and Sara A. Pozzi and Antonio Cammi},
+  year          = {2026},
+  eprint        = {2610.39028},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2610.39028}
+}
+```
+
+---
+
+## 📦 Installation
+
+| What | Notes |
+|---|---|
+| 🐍 Python ≥ 3.11 | tested with 3.11 and 3.14 |
+| `numpy`, `h5py` | used by `TrackAnalyzer` |
+| `openmc` (Python API) | the same OpenMC build used for the transport |
+| `pandas`, `matplotlib`, `joblib`, `tomli` | used by the notebooks |
+| [pyMPPost](https://gitlab.eecs.umich.edu/umich-dnng/pymppost) | not included; install it following its own instructions |
+| Nuclear data in OpenMC HDF5 format | e.g. ENDF/B-VII.1 from [openmc.org](https://openmc.org/data/) |
+
+`src/collision_track_check.py` additionally requires the official OpenMC release, version 0.15.3 or later.
+
+```bash
+git clone https://github.com/ERMETE-Lab/openmc-to-pymppost.git
+cd openmc-to-pymppost
+pip install numpy h5py pandas matplotlib joblib tomli
+```
+
+`TrackAnalyzer` is a single module: add `src/` to the Python path (see Step 2 below).
+
+---
+
+## 🧩 How it works
 
 OpenMC stores a state (position, direction, energy, time, weight, cell, material)
 after every event of every particle. A **collision** is detected as a change of
@@ -61,27 +137,6 @@ Neutrons and photons are always analysed in **separate runs and separate collisi
 For both particles, collisions that deposit less than a given energy, or that occur outside the
 selected cells, can be left out of the collision file, as with the `RPOL` and `IPOL` cards of
 MCNPX-PoliMi (see [Same options as MCNPX-PoliMi](#-same-options-as-mcnpx-polimi)).
-
----
-
-## 📦 Requirements
-
-| What | Notes |
-|---|---|
-| 🐍 Python ≥ 3.11 | tested with 3.11 and 3.14 |
-| `numpy`, `h5py` | used by `TrackAnalyzer` |
-| `openmc` (Python API) | the same OpenMC build used for the transport |
-| `pandas`, `matplotlib`, `joblib`, `tomli` | used by the notebooks |
-| [pyMPPost](https://gitlab.eecs.umich.edu/umich-dnng/pymppost) | not included; install it following its own instructions |
-| Nuclear data in OpenMC HDF5 format | e.g. ENDF/B-VII.1 from [openmc.org](https://openmc.org/data/) |
-
-`src/collision_track_check.py` additionally requires the official OpenMC release, version 0.15.3 or later.
-
-```bash
-git clone https://github.com/ERMETE-Lab/openmc-to-pymppost.git
-cd openmc-to-pymppost
-pip install numpy h5py pandas matplotlib joblib tomli
-```
 
 ---
 
@@ -119,7 +174,7 @@ not support it). With `False`, it uses a standard library and no photonuclear se
 
 ```python
 import sys
-sys.path.append("path/to/OpenMC-to-pyMPPost/src")
+sys.path.append("path/to/openmc-to-pymppost/src")
 from TrackAnalyzer import build_analyzer
 
 # Describe the detector: candidate nuclides with atomic weight ratio (A) and ZAID
@@ -165,7 +220,8 @@ MCNPX-PoliMi input file, so that the two collision files contain the same kind o
   selected materials is written.
 - `summary()` reports how many events were skipped by the `rpol` threshold.
 
-#### 📓 Configuration of `1_write_collision_file.ipynb`
+<details>
+<summary><b>📓 Configuration of <code>1_write_collision_file.ipynb</code></b></summary>
 
 All the settings are in the configuration cell, except the path to `src/`. The values used for
 the cases of the paper are given in the last column.
@@ -189,6 +245,8 @@ the cases of the paper are given in the last column.
 
 The collision file is written to `BASE_DIR/results/CASE/OpenMC_collision_file_<PARTICLE>_<DETECTOR>_<N>E5.d`,
 where `N` is the number of histories found in the track file. Give this path to pyMPPost in Step 3.
+
+</details>
 
 💡 **Choosing the candidates**
 - List **every nuclide** of the detector on which collisions can occur: a collision on a
@@ -282,7 +340,20 @@ See the paper for details.
 
 ---
 
-## 📄 Collision file format
+## 🚧 Limitations
+
+- Only elastic neutron scattering is written. Inelastic collisions are mostly rejected, but
+  about 6% of the inelastic collisions on carbon are accepted as elastic scattering on
+  hydrogen (relevant only above the carbon inelastic threshold, about 4.8 MeV).
+- Photon code 4 (capture with double fluorescence) cannot be separated from code 3.
+- Pair production is implemented but has not been specifically verified.
+- Photonuclear reactions in the detector material are not identified.
+- Electrons are not transported (thick-target bremsstrahlung approximation).
+- A direction change at a reflective boundary is indistinguishable from a collision.
+- Track files are large: about 1.2 kB per history for the ²⁵²Cf–stilbene case.
+
+<details>
+<summary><b>📄 Collision file format</b></summary>
 
 Fixed-width columns, as in MCNPX-PoliMi:
 
@@ -308,23 +379,11 @@ elastic or Compton scatterings only); column 2 is the index of the particle trac
 OpenMC history; for photons a single representative ZAID is written. None of these
 affects the light-output computation.
 
----
-
-## ⚠️ Limitations
-
-- Only elastic neutron scattering is written. Inelastic collisions are mostly rejected, but
-  about 6% of the inelastic collisions on carbon are accepted as elastic scattering on
-  hydrogen (relevant only above the carbon inelastic threshold, about 4.8 MeV).
-- Photon code 4 (capture with double fluorescence) cannot be separated from code 3.
-- Pair production is implemented but has not been specifically verified.
-- Photonuclear reactions in the detector material are not identified.
-- Electrons are not transported (thick-target bremsstrahlung approximation).
-- A direction change at a reflective boundary is indistinguishable from a collision.
-- Track files are large: about 1.2 kB per history for the ²⁵²Cf–stilbene case.
+</details>
 
 ---
 
-## 🗂️ Repository structure
+## 📁 Repository structure
 
 ```
 src/
@@ -353,9 +412,15 @@ images/                           comparison figures (PDF)
 
 ---
 
-## 📚 Citation
+## 👥 Authors and contributions
 
-If you use this code, please cite: <!-- TODO: paper reference (arXiv / journal) and Zenodo DOI -->
+- **Lorenzo Loi** (Politecnico di Milano, University of Michigan): development of the code.
+- **David Breitenmoser**, **Shaun D. Clarke**, **Sara A. Pozzi** (University of Michigan) and
+  **Antonio Cammi** (Politecnico di Milano): methodology and supervision.
+
+The code is maintained by the [ERMETE Lab](https://github.com/ERMETE-Lab), Politecnico di Milano.
+Questions and bug reports: please open an [issue](https://github.com/ERMETE-Lab/openmc-to-pymppost/issues)
+or write to lorenzo.loi@polimi.it.
 
 ## 📜 License
 
@@ -369,4 +434,5 @@ University of Michigan. MCNPX-PoliMi is developed by Politecnico di Milano and t
 Michigan and distributed by RSICC.
 The proton stopping power table for trans-stilbene (`data/birks/stilbene_dEdx.txt`) was provided
 by the DNNG, University of Michigan.
-<!-- TODO: funding -->
+This research was supported in part through computational resources and services provided by
+Advanced Research Computing at the University of Michigan, Ann Arbor.
